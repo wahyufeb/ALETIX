@@ -1,15 +1,14 @@
-const Joi = require("joi");
+const Joi = require("@hapi/joi");
 
 
 const validationCreate = (data) => {
-    const schema = {
-        number_bench:Joi.required(),
+    const schema = Joi.object({
+        number_bench:Joi.number().integer().required(),
         detail:Joi.string().min(1).required()
-    }
+    })
 
-    return Joi.validate(data, schema);
+    return schema.validate(data);
 }
-
 
 
 module.exports.validationCreate = validationCreate;
