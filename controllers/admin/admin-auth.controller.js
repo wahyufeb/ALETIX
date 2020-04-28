@@ -1,12 +1,12 @@
-const db = require("../models/index");
-const User = db.users;
+const db = require("../../models/index");
+const Admin = db.admins;
 const Op = db.Sequelize.Op;
 
 const fs = require("fs");
 const path = require("path")
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const {validationRegistration, validationLogin, validationProfile } = require("../validation/users.validation");
+const {validationRegistration, validationLogin, validationProfile } = require("../../validation/admin/admin-user.validation");
 
 exports.registration = async (req, res) => {
     // validation result
@@ -16,11 +16,11 @@ exports.registration = async (req, res) => {
     });
 
     // request body
-    const {email, first_name, last_name, telephone} = req.body;
+    const {email, first_name, last_name, telephone, role} = req.body;
     const avatar = "user.png";
 
     // email already exists
-    const checkEmail = await User.findOne({ where:{ email } });
+    const checkEmail = await Admin.findOne({ where:{ email } });
     if(checkEmail){
         return res.json({
             success:false,
@@ -29,7 +29,7 @@ exports.registration = async (req, res) => {
     }
 
     // telephone already exists
-    const checkTelphone  =await User.findOne({ where: {telephone} })
+    const checkTelphone  =await Admin.findOne({ where: {telephone} })
     if(checkTelphone){
         return res.json({
             success:false,
@@ -49,12 +49,13 @@ exports.registration = async (req, res) => {
         last_name,
         telephone,
         password,
-        avatar
+        avatar,
+        role
     }
 
     // Crate data in database
     try {
-        const queryRegistration = await User.create(data);
+        const queryRegistration = await Admin.create(data);
         res.status(201).json({
             success:true,
             message:"Registration Success",
@@ -77,8 +78,8 @@ exports.login = async (req, res) => {
     const {email, password} = req.body;
 
     // check email in database
-    const user = await User.findOne({ where:{ email }});
-    if(!user){
+    const admin = await Admin.findOne({ where:{ email }});
+    if(!admin){
         return res.json({
             success:false,
             message:"Email or password is wrong"
@@ -86,7 +87,7 @@ exports.login = async (req, res) => {
     }
 
     //  check password
-    const checkPassword = await bcrypt.compare(password, user.password);
+    const checkPassword = await bcrypt.compare(password, admin.password);
     if(!checkPassword){
         res.json({
             success:false,
@@ -95,8 +96,8 @@ exports.login = async (req, res) => {
     }
 
     try {
-        const token = await jwt.sign({id_user:user.id_user}, process.env.SECRET_KEY)
-        res.header("auth-token", token);
+        const token = await jwt.sign({id_admin:admin.id_admin, role:admin.role}, process.env.SECRET_KEY)
+        res.header("auth-token-admin", token);
         res.json({token});
     } catch (err) {
         res.send(err)
@@ -104,14 +105,14 @@ exports.login = async (req, res) => {
 }
 
 exports.profile = async (req, res) => {
-    const userId = await req.user.id_user;
+    const adminId = await req.admin.id_admin;
     
     try {
-        const queryUserProfile = await User.findOne( { where:{id_user:userId} } );
+        const queryAdminProfile = await Admin.findOne( { where:{id_admin:adminId} } );
         res.status(200).json({
             success:true,
             message:"Success, show profile",
-            queryUserProfile
+            queryAdminProfile
         });
     } catch (err) {
         res.status(500).json({err})
@@ -124,27 +125,28 @@ exports.update = async (req, res) => {
     if(error) return res.status(400).json({error:error.details[0].message});
 
     // request body
-    const userId = await req.user.id_user;
-    const {first_name, last_name} = req.body;
+    const adminId = await req.admin.id_admin;
+    const {first_name, last_name, role} = req.body;
     const avatar = req.file.filename;
 
     
     // Update user profile in database
     try {
-        const queryUserProfile = await User.findOne({ where:{ id_user:userId } });
+        const queryAdminProfile = await Admin.findOne({ where:{ id_admin:adminId } });
         
         // all fields in users table
         const data = {
-            email:queryUserProfile.email,
+            email:queryAdminProfile.email,
             first_name,
             last_name,
-            password:queryUserProfile.password,
-            avatar
+            password:queryAdminProfile.password,
+            avatar,
+            role
         }
 
         // Deleting photo if photo exists
-        if(queryUserProfile.avatar != "user.png"){
-            let pathAvatar = path.join(__dirname+"/../public/photo/"+queryUserProfile.avatar);
+        if(queryAdminProfile.avatar != "user.png"){
+            let pathAvatar = path.join(__dirname+"/../public/photo/"+queryAdminProfile.avatar);
             fs.unlink(pathAvatar, (err)=>{
                 if(err){
                     res.json({
@@ -155,7 +157,7 @@ exports.update = async (req, res) => {
                 }
             })
         }
-        const queryUpdateProfile = await User.update(data, { where:{ id_user:userId } }); 
+        const queryUpdateProfile = await Admin.update(data, { where:{ id_admin:adminId } }); 
         if(queryUpdateProfile == 1){
             res.status(201).json({
                 success:true,
