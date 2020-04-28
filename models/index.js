@@ -25,8 +25,18 @@ db.sequelize = sequelize;
 // list table
 db.users = require("./users.model")(sequelize, Sequelize);
 db.benchs = require("./benchs.model")(sequelize, Sequelize);
+db.movieSchedule = require("./movie-schedule.model")(sequelize, Sequelize);
 db.transactions = require("./transactions.model")(sequelize, Sequelize);
 db.payments = require("./payments.model")(sequelize, Sequelize);
+
+// for admin
+db.admins = require("./admin.model")(sequelize, Sequelize);
+
+// associate
+db.transactions.belongsTo(db.movieSchedule, {foreignKey:"id_movie"});
+db.transactions.belongsTo(db.benchs, {foreignKey:"id_bench"});
+db.transactions.belongsTo(db.users, {foreignKey:"id_user"});
+db.payments.belongsTo(db.transactions, {foreignKey:"id_transaction"});
 
 sequelize.authenticate()
 .then(()=> console.log("DB Connected"))

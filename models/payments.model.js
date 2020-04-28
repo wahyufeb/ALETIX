@@ -11,6 +11,9 @@ module.exports = (sequelize, Sequelize)=>{
         },
         qr:{
             type:Sequelize.STRING
+        },
+        token:{
+            type:Sequelize.STRING,
         }
     });
     return Payment;

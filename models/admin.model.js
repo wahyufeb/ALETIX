@@ -1,6 +1,6 @@
-module.exports = (sequelize, Sequelize)=>{
-    const User = sequelize.define("user", {
-        id_user: {
+module.exports = (sequelize, Sequelize) => {
+    const Admin = sequelize.define("admin", {
+        id_admin: {
             type: Sequelize.UUID,
             primaryKey: true,
             defaultValue:Sequelize.UUIDV4
@@ -23,6 +23,9 @@ module.exports = (sequelize, Sequelize)=>{
         avatar:{
             type:Sequelize.STRING
         },
+        role:{
+            type:Sequelize.ENUM("admin", "petugas")
+        }
     });
-    return User;
+    return Admin;
 }
